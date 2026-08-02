@@ -128,7 +128,6 @@ photo_prompt_app/
 
 GitHub: https://github.com/iakshayachu123-ship-it
 
-LinkedIn: *(Add your LinkedIn URL here)*
 
 ---
 
