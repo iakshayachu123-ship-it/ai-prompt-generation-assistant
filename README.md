@@ -30,17 +30,6 @@ Upload your image along with a reference image. The application analyzes both im
 
 ---
 
-## Screenshots
-
-> Add screenshots of the following pages.
-
-- Home Page
-- Image Prompt Generator
-- Thumbnail Prompt Generator
-- Image Editing Prompt Generator
-
----
-
 ## Installation
 
 ### Clone the repository
