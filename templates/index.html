@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Photo Prompt Generator Suite</title>
+
+    <style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    font-family:'Poppins',sans-serif;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    background-size:400% 400%;
+    animation:bgMove 10s ease infinite;
+    min-height:100vh;
+    padding:20px;
+}
+@keyframes bgMove {
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+
+.header{
+    text-align:center;
+    color:#fff;
+    margin-bottom:30px;
+}
+.header h1{font-size:36px;margin-bottom:10px;}
+.header p{opacity:0.9;font-size:16px;}
+
+.tabs{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin-bottom:30px;
+    flex-wrap:wrap;
+}
+.tab{
+    padding:12px 24px;
+    background:rgba(255,255,255,0.2);
+    border:2px solid rgba(255,255,255,0.3);
+    border-radius:10px;
+    color:#fff;
+    cursor:pointer;
+    transition:all 0.3s;
+    font-weight:600;
+}
+.tab:hover{background:rgba(255,255,255,0.3);transform:translateY(-2px);}
+.tab.active{background:rgba(255,255,255,0.4);border-color:#fff;box-shadow:0 0 20px rgba(255,255,255,0.3);}
+
+.container{
+    backdrop-filter:blur(12px);
+    background:rgba(255,255,255,0.2);
+    border:1px solid rgba(255,255,255,0.4);
+    padding:40px;
+    border-radius:25px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    max-width:900px;
+    width:100%;
+    color:#fff;
+    margin:0 auto 30px;
+    display:none;
+}
+.container.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:scale(0.95);}to{opacity:1;transform:scale(1);}}
+
+h2{text-align:center;font-size:26px;margin-bottom:15px;}
+.subtitle{text-align:center;opacity:0.9;margin-bottom:25px;font-size:14px;}
+
+.upload-area{
+    border:2px dashed rgba(255,255,255,0.5);
+    border-radius:15px;
+    padding:30px;
+    text-align:center;
+    background:rgba(255,255,255,0.1);
+    transition:all 0.3s ease;
+    cursor:pointer;
+    margin-bottom:20px;
+}
+.upload-area:hover{background:rgba(255,255,255,0.2);}
+.upload-area.has-image{border-color:#48bb78;background:rgba(72,187,120,0.15);}
+.upload-icon{font-size:48px;margin-bottom:10px;}
+.upload-text{font-size:16px;font-weight:500;}
+.file-name{margin-top:10px;color:#48bb78;font-weight:600;}
+.image-preview{max-width:100%;max-height:250px;margin-top:15px;border-radius:10px;display:none;box-shadow:0 0 10px rgba(0,0,0,0.2);}
+.image-preview.show{display:block;}
+
+.dual-upload{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    margin-bottom:20px;
+}
+
+textarea{
+    width:100%;margin-top:20px;height:100px;padding:15px;
+    border:none;border-radius:10px;
+    font-size:16px;resize:vertical;font-family:inherit;
+    background:rgba(255,255,255,0.2);
+    color:#fff;outline:none;
+}
+textarea::placeholder{color:#ddd;}
+textarea:focus{box-shadow:0 0 0 2px #667eea;}
+
+input[type="text"]{
+    width:100%;margin-top:20px;padding:15px;
+    border:none;border-radius:10px;
+    font-size:16px;font-family:inherit;
+    background:rgba(255,255,255,0.2);
+    color:#fff;outline:none;
+}
+input[type="text"]::placeholder{color:#ddd;}
+input[type="text"]:focus{box-shadow:0 0 0 2px #667eea;}
+
+button{
+    width:100%;padding:15px;margin-top:20px;
+    background:linear-gradient(90deg,#667eea,#764ba2);
+    color:white;border:none;border-radius:10px;
+    font-size:18px;cursor:pointer;
+    font-weight:600;transition:transform 0.2s,box-shadow 0.3s;
+}
+button:hover:not(:disabled){transform:scale(1.03);box-shadow:0 0 20px rgba(118,75,162,0.5);}
+button:disabled{opacity:0.6;cursor:not-allowed;}
+
+.loading{margin-top:15px;text-align:center;font-weight:600;display:none;}
+.loading-dots span{
+    display:inline-block;width:8px;height:8px;
+    background:#fff;border-radius:50%;margin:0 2px;
+    animation:bounce 1s infinite alternate;
+}
+.loading-dots span:nth-child(2){animation-delay:0.2s;}
+.loading-dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes bounce{to{transform:translateY(-6px);opacity:0.5;}}
+
+.error{background:rgba(255,0,0,0.15);border-left:4px solid #ff4d4d;
+    color:#fff;padding:12px;border-radius:8px;margin-top:15px;display:none;}
+.error.show{display:block;}
+
+.result-area{
+    display:none;background:rgba(255,255,255,0.15);
+    border:1px solid rgba(255,255,255,0.3);
+    border-radius:15px;padding:25px;margin-top:25px;
+}
+.result-area.show{display:block;animation:fadeInScale 0.4s ease forwards;}
+@keyframes fadeInScale{
+    from{opacity:0;transform:scale(0.95);}
+    to{opacity:1;transform:scale(1);}
+}
+.prompt-result{
+    background:rgba(255,255,255,0.2);
+    padding:15px;border-radius:10px;
+    margin:10px 0;color:#fff;
+    border-left:4px solid #667eea;
+}
+.copy-btn{background:#48bb78 !important;}
+.copy-btn:hover{background:#38a169 !important;}
+
+.examples{
+    margin-top:25px;padding:20px;
+    background:rgba(255,255,255,0.1);
+    border-left:4px solid #f6ad55;border-radius:10px;
+}
+.examples h3{margin-bottom:10px;font-size:16px;}
+.examples ul{margin-left:20px;}
+.examples li{margin-bottom:5px;}
+
+@media(max-width:768px){
+    .dual-upload{grid-template-columns:1fr;}
+    .tabs{flex-direction:column;}
+    h1{font-size:28px !important;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🎨 AI Prompt Generator Suite</h1>
+    <p>Professional prompts for photo editing, thumbnails, and style transfer</p>
+</div>
+
+<div class="tabs">
+    <div class="tab active" data-tab="edit" onclick="switchTab('edit')">✨ Photo Edit</div>
+    <div class="tab" data-tab="thumbnail" onclick="switchTab('thumbnail')">🎨 Thumbnail Creator</div>
+    <div class="tab" data-tab="style" onclick="switchTab('style')">🖼️ Style Transfer</div>
+</div>
+
+<!-- SECTION 1: Photo Edit Prompt -->
+<div id="editSection" class="container active">
+    <h2>✨ Photo Edit Prompt Generator</h2>
+    <p class="subtitle">Upload your photo and describe the changes you want</p>
+
+    <form id="editForm" onsubmit="return false;">
+            {% csrf_token %}
+        <input type="file" id="editFile" accept="image/*" style="position:absolute;left:-9999px;">
+            
+        <div class="upload-area" onclick="document.getElementById('editFile').click()">
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">Click to upload your photo</div>
+            <div class="file-name" id="editFileName"></div>
+            <img id="editPreview" class="image-preview">
+            </div>
+            
+        <textarea id="editIdea" placeholder="Describe what you want to change (e.g. blur background, add sunset lighting...)" required></textarea>
+        <button type="button" onclick="generateEdit()">✨ Generate Edit Prompt</button>
+        </form>
+        
+    <div class="loading" id="editLoading">
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+        <p>Analyzing your photo...</p>
+    </div>
+
+    <div class="error" id="editError"></div>
+
+    <div class="result-area" id="editResult">
+        <h2>🎯 Your Edit Prompt:</h2>
+        <div class="prompt-result" id="editPrompt"></div>
+        <button type="button" class="copy-btn" onclick="copyText('editPrompt')">📋 Copy Prompt</button>
+        </div>
+
+        <div class="examples">
+            <h3>💡 Example Ideas:</h3>
+            <ul>
+            <li>Blur the background with bokeh effect</li>
+            <li>Add warm golden hour lighting</li>
+            <li>Make colors more vibrant and saturated</li>
+                <li>Remove object in background</li>
+        </ul>
+    </div>
+</div>
+
+<!-- SECTION 2: Thumbnail Creator -->
+<div id="thumbnailSection" class="container">
+    <h2>🎨 YouTube Thumbnail Prompt Generator</h2>
+    <p class="subtitle">Create viral-worthy thumbnail prompts with perfect text placement</p>
+
+    <form id="thumbnailForm" onsubmit="return false;">
+        {% csrf_token %}
+        <input type="file" id="thumbnailFile" accept="image/*" style="position:absolute;left:-9999px;">
+        
+        <div class="upload-area" onclick="document.getElementById('thumbnailFile').click()">
+            <div class="upload-icon">🖼️</div>
+            <div class="upload-text">Click to upload base image (optional)</div>
+            <div class="file-name" id="thumbnailFileName"></div>
+            <img id="thumbnailPreview" class="image-preview">
+        </div>
+
+        <input type="text" id="thumbnailText" placeholder="Text to appear on thumbnail (e.g. 'How I Made $10K')" required>
+        
+        <textarea id="thumbnailStyle" placeholder="Describe thumbnail style (e.g. dramatic, high energy, bold colors, shocked expression...)" required></textarea>
+        
+        <button type="button" onclick="generateThumbnail()">🎨 Generate Thumbnail Prompt</button>
+    </form>
+
+    <div class="loading" id="thumbnailLoading">
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+        <p>Creating thumbnail prompt...</p>
+    </div>
+
+    <div class="error" id="thumbnailError"></div>
+
+    <div class="result-area" id="thumbnailResult">
+        <h2>🎯 Your Thumbnail Prompt:</h2>
+        <div class="prompt-result" id="thumbnailPrompt"></div>
+        <button type="button" class="copy-btn" onclick="copyText('thumbnailPrompt')">📋 Copy Prompt</button>
+    </div>
+
+    <div class="examples">
+        <h3>💡 Tips for Viral Thumbnails:</h3>
+        <ul>
+            <li>Use bold, contrasting colors (red, yellow, blue)</li>
+            <li>Include human faces with exaggerated expressions</li>
+            <li>Keep text short and impactful (3-5 words max)</li>
+            <li>Add dramatic lighting and shadows</li>
+            <li>Include visual indicators (arrows, circles, highlights)</li>
+        </ul>
+    </div>
+</div>
+
+<!-- SECTION 3: Style Transfer -->
+<div id="styleSection" class="container">
+    <h2>🖼️ Style Transfer Prompt Generator</h2>
+    <p class="subtitle">Match your photo's quality to an inspiration image</p>
+
+    <form id="styleForm" onsubmit="return false;">
+        {% csrf_token %}
+        
+        <div class="dual-upload">
+            <div>
+                <input type="file" id="styleOriginal" accept="image/*" style="position:absolute;left:-9999px;">
+                <div class="upload-area" onclick="document.getElementById('styleOriginal').click()">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">Your Photo to Edit</div>
+                    <div class="file-name" id="styleOriginalName"></div>
+                    <img id="styleOriginalPreview" class="image-preview">
+                </div>
+            </div>
+            
+            <div>
+                <input type="file" id="styleInspired" accept="image/*" style="position:absolute;left:-9999px;">
+                <div class="upload-area" onclick="document.getElementById('styleInspired').click()">
+                    <div class="upload-icon">✨</div>
+                    <div class="upload-text">Inspiration Photo</div>
+                    <div class="file-name" id="styleInspiredName"></div>
+                    <img id="styleInspiredPreview" class="image-preview">
+                </div>
+            </div>
+        </div>
+
+        <textarea id="styleDescription" placeholder="What qualities do you want to match? (e.g. copy the lighting style, match the color grading, replicate the atmosphere and mood...)" required></textarea>
+        
+        <button type="button" onclick="generateStyle()">🖼️ Generate Style Transfer Prompt</button>
+    </form>
+
+    <div class="loading" id="styleLoading">
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+        <p>Analyzing both images...</p>
+    </div>
+
+    <div class="error" id="styleError"></div>
+
+    <div class="result-area" id="styleResult">
+        <h2>🎯 Your Style Transfer Prompt:</h2>
+        <div class="prompt-result" id="stylePrompt"></div>
+        <button type="button" class="copy-btn" onclick="copyText('stylePrompt')">📋 Copy Prompt</button>
+    </div>
+
+    <div class="examples">
+        <h3>💡 Great for:</h3>
+        <ul>
+            <li>Matching professional photography styles</li>
+            <li>Replicating cinematic color grading</li>
+            <li>Copying lighting setups from reference photos</li>
+            <li>Achieving consistent look across photo series</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+// Tab switching
+function switchTab(tabName){
+    console.log('Switching to tab:', tabName);
+    
+    // Remove active from all tabs
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    
+    // Remove active from all containers
+    document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+    
+    // Activate the clicked tab
+    const clickedTab = document.querySelector(`[data-tab="${tabName}"]`);
+    if (clickedTab) {
+        clickedTab.classList.add('active');
+    }
+    
+    // Activate the corresponding section
+    const sectionId = tabName + 'Section';
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.classList.add('active');
+        console.log('✓ Activated section:', sectionId);
+    } else {
+        console.error('✗ Section not found:', sectionId);
+    }
+}
+
+// File selection handlers
+const fileHandlers={
+    edit:{file:null,input:'editFile',name:'editFileName',preview:'editPreview'},
+    thumbnail:{file:null,input:'thumbnailFile',name:'thumbnailFileName',preview:'thumbnailPreview'},
+    styleOriginal:{file:null,input:'styleOriginal',name:'styleOriginalName',preview:'styleOriginalPreview'},
+    styleInspired:{file:null,input:'styleInspired',name:'styleInspiredName',preview:'styleInspiredPreview'}
+};
+
+Object.keys(fileHandlers).forEach(key=>{
+    const handler=fileHandlers[key];
+    document.getElementById(handler.input).onchange=function(e){
+        const file=e.target.files[0];
+        if(file){
+            handler.file=file;
+            document.getElementById(handler.name).textContent='✓ '+file.name;
+            document.getElementById(handler.input).closest('.upload-area').classList.add('has-image');
+            
+            const reader=new FileReader();
+            reader.onload=ev=>{
+                const img=document.getElementById(handler.preview);
+                img.src=ev.target.result;
+                img.classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            }
+    };
+});
+
+// CSRF token
+function getCookie(name){
+    let val=null;
+    if(document.cookie){
+        const cookies=document.cookie.split(';');
+        for(let i=0;i<cookies.length;i++){
+            const c=cookies[i].trim();
+            if(c.indexOf(name+'=')===0){
+                val=decodeURIComponent(c.substring(name.length+1));
+                break;
+            }
+        }
+    }
+    return val;
+}
+
+// Generate functions
+async function generateEdit(){
+    const idea=document.getElementById('editIdea').value.trim();
+    const file=fileHandlers.edit.file;
+    
+    if(!file){
+        showError('editError','Please upload a photo');
+        return;
+    }
+    if(!idea){
+        showError('editError','Please describe what you want to change');
+        return;
+    }
+    
+    await makeRequest('/generate/edit/',{photo:file,idea:idea},'edit');
+}
+
+async function generateThumbnail(){
+    const text=document.getElementById('thumbnailText').value.trim();
+    const style=document.getElementById('thumbnailStyle').value.trim();
+    const file=fileHandlers.thumbnail.file;
+    
+    if(!text){
+        showError('thumbnailError','Please enter text for thumbnail');
+        return;
+    }
+    if(!style){
+        showError('thumbnailError','Please describe thumbnail style');
+        return;
+    }
+    
+    await makeRequest('/generate/thumbnail/',{photo:file,text:text,style:style},'thumbnail');
+}
+
+async function generateStyle(){
+    const original=fileHandlers.styleOriginal.file;
+    const inspired=fileHandlers.styleInspired.file;
+    const desc=document.getElementById('styleDescription').value.trim();
+    
+    if(!original){
+        showError('styleError','Please upload your photo to edit');
+        return;
+    }
+    if(!inspired){
+        showError('styleError','Please upload inspiration photo');
+        return;
+    }
+    if(!desc){
+        showError('styleError','Please describe what to match');
+        return;
+    }
+    
+    await makeRequest('/generate/style/',{original:original,inspired:inspired,description:desc},'style');
+}
+
+// Make API request
+async function makeRequest(url,data,section){
+    const loading=document.getElementById(section+'Loading');
+    const error=document.getElementById(section+'Error');
+    const result=document.getElementById(section+'Result');
+    const promptDiv=document.getElementById(section+'Prompt');
+    
+    error.style.display='none';
+    result.classList.remove('show');
+    loading.style.display='block';
+    
+    try{
+        const formData=new FormData();
+        Object.keys(data).forEach(key=>{
+            if(data[key])formData.append(key,data[key]);
+        });
+        
+        const csrf=getCookie('csrftoken')||document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        
+        const response=await fetch(url,{
+            method:'POST',
+            body:formData,
+            headers:{'X-CSRFToken':csrf}
+        });
+        
+        const json=await response.json();
+        
+        if(json.success){
+            promptDiv.textContent=json.prompt;
+            result.classList.add('show');
+        }else{
+            showError(section+'Error',json.error||'Something went wrong');
+        }
+    }catch(err){
+        showError(section+'Error','Network error: '+err.message);
+    }finally{
+        loading.style.display='none';
+    }
+}
+
+// Show error
+function showError(id,msg){
+    const error=document.getElementById(id);
+    error.textContent='⚠️ '+msg;
+    error.style.display='block';
+    error.classList.add('show');
+}
+
+// Copy text
+function copyText(id){
+    const text=document.getElementById(id).textContent;
+    navigator.clipboard.writeText(text);
+    const btn=event.target;
+    const orig=btn.textContent;
+    btn.textContent='✅ Copied!';
+    setTimeout(()=>btn.textContent=orig,2000);
+}
+    </script>
+</body>
+</html>
